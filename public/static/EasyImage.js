@@ -44,74 +44,214 @@ function uploadCopy(copyID, loadClass) {
     }, 666);
 }
 
+/**
+ * 判断URL是否为图片链接
+ * @param {string} url - 要检查的URL
+ * @returns {boolean} - 是否为图片链接
+ */
+function isImageUrl(url) {
+    if (!isUrl(url)) return false;
+    // 检查URL是否包含常见图片扩展名，或者是常见的图片托管服务
+    var imagePattern = /\.(jpeg|jpg|gif|png|bmp|webp|svg|ico)(\?.*)?$/i;
+    // 常见图片托管服务和直接图片链接
+    var imageHosts = [
+        'i.imgur.com', 'imgur.com',
+        'i.loli.net', 's2.loli.net',
+        'cdn.v2ex.com',
+        'images.unsplash.com', 'unsplash.com',
+        'picsum.photos',
+        'github.com', 'raw.githubusercontent.com',
+        'gcore.jsdelivr.net', 'fastly.jsdelivr.net', 'cdn.jsdelivr.net',
+        'cdn.cnpmjs.org'
+    ];
+
+    try {
+        var urlObj = parseURL(url);
+        // 检查是否有图片扩展名
+        if (imagePattern.test(url)) {
+            return true;
+        }
+        // 检查是否为已知的图片托管服务
+        for (var i = 0; i < imageHosts.length; i++) {
+            if (urlObj.host === imageHosts[i] || urlObj.host.endsWith('.' + imageHosts[i])) {
+                return true;
+            }
+        }
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+/**
+ * 从URL下载图片并返回File对象
+ * @param {string} imageUrl - 图片URL
+ * @returns {Promise<File>} - 图片文件对象
+ */
+function fetchImageFromUrl(imageUrl) {
+    return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', imageUrl, true);
+        xhr.responseType = 'blob';
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var blob = xhr.response;
+                // 从URL中提取文件名或使用默认名称
+                var fileName = 'pasted_image';
+                try {
+                    var urlObj = parseURL(imageUrl);
+                    var pathParts = urlObj.path.split('/');
+                    var lastPart = pathParts[pathParts.length - 1];
+                    if (lastPart && lastPart.indexOf('.') !== -1) {
+                        fileName = lastPart.split('.')[0];
+                    }
+                } catch (e) {
+                    // 使用默认文件名
+                }
+
+                // 获取MIME类型
+                var mimeType = blob.type || 'image/jpeg';
+                var extension = mimeType.split('/')[1] || 'jpg';
+
+                // 创建File对象
+                var file = new File([blob], fileName + '.' + extension, { type: mimeType });
+                resolve(file);
+            } else {
+                reject(new Error('下载图片失败，状态码: ' + xhr.status));
+            }
+        };
+
+        xhr.onerror = function() {
+            reject(new Error('网络错误，无法下载图片'));
+        };
+
+        // 设置超时
+        xhr.timeout = 30000; // 30秒超时
+        xhr.ontimeout = function() {
+            reject(new Error('下载图片超时'));
+        };
+
+        xhr.send();
+    });
+}
+
 /** 粘贴上传 2023-01-30 */
 (function () {
     document.addEventListener('paste', function (e) {
         var items = ((e.clipboardData || window.clipboardData).items) || [];
         console.log(e)
         var file = null;
-        $("#upShowID").addClass("load-indicator loading"); // 增加正在上传状态 2-1
+        var textData = '';
+
+        // 首先检查剪贴板中的图片数据
         if (items && items.length) {
             for (var i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
                     file = items[i].getAsFile();
                     break;
                 }
-            }
-        }
-
-        // 未找到图片
-        if (!file) {
-            $("#upShowID").removeClass("load-indicator loading"); // 移除正在上传状态 2-2
-            $.zui.messager.show('粘贴内容非图片!', { icon: 'bell', time: 3000, type: 'danger', placement: 'top' }); return;
-        }
-
-        var formData = new FormData();
-        formData.append('file', file);
-        formData.append('sign', new Date().getTime() / 1000 | 0);
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 1) {
-                $.zui.messager.show('粘贴上传中...', { icon: 'bell', time: 3000, type: 'primary', placement: 'top' });
-            }
-        }
-
-        xhr.onload = function () {
-            var obj = JSON.parse(this.responseText);
-            if (obj.code === 200) {
-                $("#links").append(obj.url + "\r\n");
-                $("#bbscode").append("[img]" + obj.url + "[/img]\r\n");
-                $("#markdown").append("![" + obj.srcName + "](" + obj.url + ")\r\n");
-                $("#html").append('&lt;img src="' + obj.url + '" alt="' + obj.srcName + '" /&gt;\r\n');
-                $("#thumb").append(obj.thumb + "\r\n");
-                $("#del").append(obj.del + "\r\n");
-                // 上传成功提示 原始文件名称obj.srcName + 提示
-                $.zui.messager.show('粘贴上传成功', { icon: 'bell', time: 4000, type: 'success', placement: 'top' });
-                // 移除正在上传状态 2-3
-                $("#upShowID").removeClass("load-indicator loading");
-
-                try { // 储存上传记录
-                    console.log('history localStorage success');
-                    $.zui.store.set(obj.srcName, obj)
-                } catch (err) {
-                    // 存储上传记录失败提示
-                    $.zui.messager.show('存储上传记录失败' + err, { icon: 'bell', time: 4000, type: 'danger', placement: 'top' });
-                    console.log('history localStorage failed:' + err);
+                // 同时获取文本数据
+                if (items[i].type === 'text/plain') {
+                    var item = items[i];
+                    if (typeof item.getAsEntry === 'function') {
+                        var entry = item.getAsEntry();
+                        if (entry) {
+                            textData = entry.fullPath;
+                        }
+                    }
                 }
-            } else {
-                $("#upShowID").removeClass("load-indicator loading"); // 移除正在上传状态 2-4
-                $.zui.messager.show(obj.message, { icon: 'bell', time: 4000, type: 'danger', placement: 'top' });
             }
-        };
+        }
 
-        xhr.onerror = function () {
-            $("#upShowID").removeClass("load-indicator loading"); // 移除正在上传状态 2-5
-            $.zui.messager.show('因网络问题导致的上传失败...', { icon: 'bell', time: 4000, type: 'primary', placement: 'top' });
-        };
-        xhr.open('POST', 'app/upload.php', true);
-        xhr.send(formData);
+        // 获取剪贴板中的文本（可能包含图片URL）
+        var clipboardText = (e.clipboardData || window.clipboardData).getData('text');
+
+        // 如果没有找到图片文件，但有文本内容
+        if (!file && clipboardText) {
+            textData = clipboardText.trim();
+        }
+
+        // 如果找到了图片URL
+        if (!file && textData && isImageUrl(textData)) {
+            $("#upShowID").addClass("load-indicator loading");
+            $.zui.messager.show('正在下载图片...', { icon: 'bell', time: 3000, type: 'primary', placement: 'top' });
+
+            fetchImageFromUrl(textData).then(function(fetchedFile) {
+                uploadPastedFile(fetchedFile);
+            }).catch(function(error) {
+                $("#upShowID").removeClass("load-indicator loading");
+                $.zui.messager.show('下载图片失败: ' + error.message, { icon: 'bell', time: 4000, type: 'danger', placement: 'top' });
+            });
+            return;
+        }
+
+        // 如果有图片数据，直接上传
+        if (file) {
+            $("#upShowID").addClass("load-indicator loading"); // 增加正在上传状态 2-1
+            uploadPastedFile(file);
+            return;
+        }
+
+        // 未找到图片或图片URL
+        if (textData) {
+            $.zui.messager.show('检测到链接但非图片格式，请手动上传图片文件', { icon: 'bell', time: 4000, type: 'warning', placement: 'top' });
+        } else {
+            $.zui.messager.show('粘贴内容非图片!', { icon: 'bell', time: 3000, type: 'danger', placement: 'top' });
+        }
     });
 })();
+
+/**
+ * 上传粘贴的文件
+ * @param {File} file - 要上传的文件
+ */
+function uploadPastedFile(file) {
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('sign', new Date().getTime() / 1000 | 0);
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 1) {
+            $.zui.messager.show('粘贴上传中...', { icon: 'bell', time: 3000, type: 'primary', placement: 'top' });
+        }
+    }
+
+    xhr.onload = function () {
+        var obj = JSON.parse(this.responseText);
+        if (obj.code === 200) {
+            $("#links").append(obj.url + "\r\n");
+            $("#bbscode").append("[img]" + obj.url + "[/img]\r\n");
+            $("#markdown").append("![](" + obj.url + ")\r\n");
+            $("#html").append('&lt;img src="' + obj.url + '" alt="' + obj.srcName + '" /&gt;\r\n');
+            $("#thumb").append(obj.thumb + "\r\n");
+            $("#del").append(obj.del + "\r\n");
+            // 上传成功提示 原始文件名称obj.srcName + 提示
+            $.zui.messager.show('粘贴上传成功', { icon: 'bell', time: 4000, type: 'success', placement: 'top' });
+            // 移除正在上传状态 2-3
+            $("#upShowID").removeClass("load-indicator loading");
+
+            try { // 储存上传记录
+                console.log('history localStorage success');
+                $.zui.store.set(obj.srcName, obj)
+            } catch (err) {
+                // 存储上传记录失败提示
+                $.zui.messager.show('存储上传记录失败' + err, { icon: 'bell', time: 4000, type: 'danger', placement: 'top' });
+                console.log('history localStorage failed:' + err);
+            }
+        } else {
+            $("#upShowID").removeClass("load-indicator loading"); // 移除正在上传状态 2-4
+            $.zui.messager.show(obj.message, { icon: 'bell', time: 4000, type: 'danger', placement: 'top' });
+        }
+    };
+
+    xhr.onerror = function () {
+        $("#upShowID").removeClass("load-indicator loading"); // 移除正在上传状态 2-5
+        $.zui.messager.show('因网络问题导致的上传失败...', { icon: 'bell', time: 4000, type: 'primary', placement: 'top' });
+    };
+    xhr.open('POST', 'app/upload.php', true);
+    xhr.send(formData);
+}
 
 
 /** 检测浏览器是否支持cookie */
