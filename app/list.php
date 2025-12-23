@@ -59,10 +59,14 @@ if ($config['ad_top']) echo $config['ad_top_info'];
                 $relative_path = config_path($path) . $value;     // 相对路径
                 $imgUrl = $config['domain'] . $relative_path;     // 图片地址
                 $linkUrl = rand_imgurl() . $config_path . $value; // 图片复制与原图地址
+                $imgPath = APP_ROOT . $relative_path;             // 图片绝对路径
+                $imgSize = filesize($imgPath);                     // 图片文件大小
+                $imgExt = strtoupper(pathinfo($value, PATHINFO_EXTENSION)); // 图片格式
+                $imgSizeFormatted = getDistUsed($imgSize);         // 格式化后的文件大小
             ?>
                 <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
                   <div class="card">
-                    <li><img src="<?php static_cdn(); ?>/public/images/loading.svg" data-image="<?php echo creat_thumbnail_by_list($imgUrl); ?>" data-original="<?php echo $imgUrl; ?>" alt="简单图床-EasyImage"></li>
+                    <li><img src="<?php static_cdn(); ?>/public/images/loading.svg" data-image="<?php echo creat_thumbnail_by_list($imgUrl); ?>" data-original="<?php echo $imgUrl; ?>" alt="简单图床-EasyImage" data-ext="<?php echo $imgExt; ?>" data-size="<?php echo $imgSizeFormatted; ?>"></li>
                     <div class="bottom-bar">
                       <a href="<?php echo $linkUrl; ?>" target="_blank"><i class="icon icon-picture" data-toggle="tooltip" title="打开" style="margin-left:10px;"></i></a>
                       <a href="#" class="copy" data-clipboard-text="<?php echo $linkUrl; ?>" data-toggle="tooltip" title="复制链接" style="margin-left:10px;"><i class="icon icon-copy"></i></a>
@@ -171,6 +175,21 @@ if ($config['ad_top']) echo $config['ad_top_info'];
     // viewjs
     new Viewer(document.getElementById('viewjs'), {
       url: 'data-original',
+      title: function (image) {
+        // 获取图片的格式和大小信息
+        const ext = image.alt.split(' ')[0] === '简单图床-EasyImage' ? image.dataset.ext || '' : '';
+        const size = image.dataset.size || '';
+        const naturalWidth = image.naturalWidth || '';
+        const naturalHeight = image.naturalHeight || '';
+        // 返回格式化的标题
+        if (ext && size && naturalWidth && naturalHeight) {
+          return `简单图床-EasyImage (${naturalWidth} x ${naturalHeight}) - ${ext} - ${size}`;
+        } else if (naturalWidth && naturalHeight) {
+          return `简单图床-EasyImage (${naturalWidth} x ${naturalHeight})`;
+        } else {
+          return '简单图床-EasyImage';
+        }
+      },
     });
 
     // POST 删除提交
