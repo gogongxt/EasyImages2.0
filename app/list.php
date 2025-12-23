@@ -176,16 +176,18 @@ if ($config['ad_top']) echo $config['ad_top_info'];
     new Viewer(document.getElementById('viewjs'), {
       url: 'data-original',
       title: function (image) {
-        // 获取图片的格式和大小信息
-        const ext = image.alt.split(' ')[0] === '简单图床-EasyImage' ? image.dataset.ext || '' : '';
-        const size = image.dataset.size || '';
-        const naturalWidth = image.naturalWidth || '';
-        const naturalHeight = image.naturalHeight || '';
+        // 通过URL查找原始img元素以获取data属性
+        var originalSrc = image.src;
+        var originalImg = document.querySelector('img[data-original="' + originalSrc + '"]');
+        var ext = originalImg ? (originalImg.dataset.ext || '') : '';
+        var size = originalImg ? (originalImg.dataset.size || '') : '';
+        var naturalWidth = image.naturalWidth || 0;
+        var naturalHeight = image.naturalHeight || 0;
         // 返回格式化的标题
         if (ext && size && naturalWidth && naturalHeight) {
-          return `简单图床-EasyImage (${naturalWidth} x ${naturalHeight}) - ${ext} - ${size}`;
+          return '简单图床-EasyImage (' + naturalWidth + ' x ' + naturalHeight + ') - ' + ext + ' - ' + size;
         } else if (naturalWidth && naturalHeight) {
-          return `简单图床-EasyImage (${naturalWidth} x ${naturalHeight})`;
+          return '简单图床-EasyImage (' + naturalWidth + ' x ' + naturalHeight + ')';
         } else {
           return '简单图床-EasyImage';
         }
