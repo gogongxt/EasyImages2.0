@@ -1,4 +1,37 @@
+# ==============================
+# EasyImages2.0 .gitignore
+# ==============================
+
+# ---- 应用运行时目录 ----
 i/
 config/
 admin/logs/*
 !admin/logs/.htaccess
+
+# ---- IDE / 编辑器 ----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-*
+.project
+.classpath
+.settings/
+
+# ---- OS 生成文件 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- AI 工具链元数据 ----
+.codeartsdoer/
+
+# ---- 依赖（虽然当前本地引入，预留） ----
+vendor/
+node_modules/
+
+# ---- 构建产物 ----
+*.phar
+
+AGENTS.md
