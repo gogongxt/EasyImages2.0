@@ -121,7 +121,12 @@ function _login($user = null, $password = null)
     if ($user === $config['user'] && $password === $config['password']) {
         // 将账号密码序列化后存储
         $browser_cookie = json_encode(array($user, $password));
-        setcookie('auth', $browser_cookie, time() + 3600 * 24 * 14, '/');
+        setcookie('auth', $browser_cookie, [
+            'expires' => time() + 3600 * 24 * 14,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
         return json_encode(array('code' => 200, 'level' => 1, 'messege' => '管理员登录成功'));
     }
     // 是否上传者
@@ -130,7 +135,12 @@ function _login($user = null, $password = null)
         if ($guestConfig[$user]['expired'] < time()) return json_encode(array('code' => 400, 'level' => 0, 'messege' => $user . '账号已过期'));
         // 未过期设置cookie
         $browser_cookie = json_encode(array($user, $password));
-        setcookie('auth', $browser_cookie, time() + 3600 * 24 * 14, '/');
+        setcookie('auth', $browser_cookie, [
+            'expires' => time() + 3600 * 24 * 14,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
         return json_encode(array('code' => 200, 'level' => 2, 'messege' => $user . '用户登录成功'));
     }
     // 检查账号是否存在

@@ -1,3 +1,4 @@
 i/
 config/
-admin/logs/login/
+admin/logs/*
+!admin/logs/.htaccess
