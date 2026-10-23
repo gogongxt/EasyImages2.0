@@ -254,13 +254,14 @@ function config_path($path = null)
     // php7.0 $path = $path ?? date('Y/m/d/');
 
     $img_path = $config['path'] . $path;
+    $fs_path = APP_ROOT . $img_path;
 
-    if (!is_dir($img_path)) {
-        @mkdir($img_path, 0755, true);
+    if (!is_dir($fs_path)) {
+        @mkdir($fs_path, 0755, true);
     }
 
-    if (!is_writable($img_path)) {
-        @chmod($img_path, 0755);
+    if (!is_writable($fs_path)) {
+        @chmod($fs_path, 0755);
     }
 
     return $img_path;
