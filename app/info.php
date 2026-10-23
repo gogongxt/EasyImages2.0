@@ -39,10 +39,10 @@ $logsName = basename($img_url);
 if (is_file(APP_ROOT . '/admin/logs/upload/' . $logs . '.php')) {
     include APP_ROOT . '/admin/logs/upload/' . $logs . '.php';
 } else {
-    $logs = array($logsName => array('source' => '请在图床安全中开启上传日志!', 'date' => '请在图床安全中开启上传日志!', 'ip' => '0.0.0.0', 'port' => '0', 'user_agent' => '请在图床安全中开启上传日志!', 'path' => '请在图床安全中开启上传日志!', 'size' => '请在图床安全中开启上传日志!', 'md5' => '请在图床安全中开启上传日志!', 'checkImg' => '请在图床安全中开启上传日志!', 'from' => '请在图床安全中开启上传日志!'));
+    $logs = array($logsName => array('source' => '请在图床安全中开启上传日志!', 'date' => '请在图床安全中开启上传日志!', 'ip' => '0.0.0.0', 'port' => '0', 'user_agent' => '请在图床安全中开启上传日志!', 'path' => '请在图床安全中开启上传日志!', 'size' => '请在图床安全中开启上传日志!', 'md5' => '请在图床安全中开启上传日志!', 'from' => '请在图床安全中开启上传日志!'));
 }
 if (empty($logs[$logsName])) {
-    $logs = array($logsName => array('source' => '日志不存在', 'date' => '日志不存在', 'ip' => '0.0.0.0', 'port' => '0', 'user_agent' => '日志不存在', 'path' => '日志不存在', 'size' => '日志不存在', 'md5' => '日志不存在', 'checkImg' => '日志不存在', 'from' => '日志不存在'));
+    $logs = array($logsName => array('source' => '日志不存在', 'date' => '日志不存在', 'ip' => '0.0.0.0', 'port' => '0', 'user_agent' => '日志不存在', 'path' => '日志不存在', 'size' => '日志不存在', 'md5' => '日志不存在', 'from' => '日志不存在'));
 }
 // 图片真实路径
 $imgABPath = APP_ROOT . $getIMG;
@@ -106,10 +106,6 @@ if ($config['ad_top']) echo $config['ad_top_info'];
                     <tr class="text-primary">
                         <td>上传地址</td>
                         <td><?php echo Ip2Region($logs[$logsName]['ip']); ?></td>
-                    </tr>
-                    <tr class="text-primary">
-                        <td>监黄状态</td>
-                        <td><?php echo strstr('OFF', $logs[$logsName]['checkImg']) ? '未开启' : '已通过'; ?></td>
                     </tr>
                     <tr class="text-primary">
                         <td>上传方式</td>

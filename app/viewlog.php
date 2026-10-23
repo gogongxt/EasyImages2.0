@@ -143,12 +143,6 @@ try {
                     width: 0.06
                 },
                 {
-                    label: '鉴黄?',
-                    name: 'checkImg',
-                    html: true,
-                    width: 0.05
-                },
-                {
                     label: '来源',
                     name: 'from',
                     html: true,
@@ -172,7 +166,6 @@ try {
                         path: '<input class="form-control input-sm" type="text" value="<?php echo $v['path']; ?>" readonly>',
                         md5: '<input class="form-control input-sm" type="text" value="<?php echo $v['md5']; ?>" readonly>',
                         size: '<?php echo $v['size']; ?>',
-                        checkImg: '<?php echo strstr('OFF', $v['checkImg']) ? '否' : '是'; ?>',
                         from: '<?php echo is_string($v['from']) ? "网页" : 'API: ' . $v['from']; ?>',
                         manage: '<div class="btn-group"><a href="<?php echo rand_imgurl() . $v['path']; ?>" target="_blank" class="btn btn-mini btn-success">查看</a> <a href="/app/info.php?img=<?php echo $v['path']; ?>" target="_blank" class="btn btn-mini">信息</a><a href="#" onclick="ajax_post(\'<?php echo $v['path']; ?>\',\'recycle\')" class="btn btn-mini btn-info">回收</a> <a href="#" onclick="ajax_post(\'<?php echo $v['path']; ?>\',\'delete\')" class="btn btn-mini btn-danger">删除</a></div>',
                     },					

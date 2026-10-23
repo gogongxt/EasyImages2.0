@@ -311,19 +311,6 @@ function parseURL(url) {
 }
 
 /**
- * jQuery 读取文件 readTxt('../admin/version.php');
- * @param {*} filePath 
- */
-function readTxt(filePath = '../admin/version.php') {
-    $.get(filePath, function (data) {
-        var lines = data.split("\n"); //按行读取
-        $.each(lines, function (i, v) {
-            console.log(v);
-        });
-    });
-}
-
-/**
  * JS验证是否为URL 这是提取自：npm包 async-validator的源码。
  * 参考: https://www.cnblogs.com/lanleiming/p/14250497.html
  * @param {*} str

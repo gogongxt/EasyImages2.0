@@ -6,7 +6,6 @@
 
 require_once __DIR__ . '/../app/header.php';
 require_once APP_ROOT . '/config/api_key.php';
-require_once APP_ROOT . '/config/config.guest.php';
 
 // 是否关闭图床设置
 if ($config['show_admin_inc'] === 0) {
@@ -29,24 +28,10 @@ if (!is_who_login('admin')) {
 // 定义文件位置 
 $config_file = APP_ROOT . '/config/config.php'; // config.php
 $api_key_file = APP_ROOT . '/config/api_key.php'; // api_key.php
-$guest_config_file = APP_ROOT . '/config/config.guest.php'; // config.guest.php
 
 // 修改config配置
 if (isset($_POST['update'])) {
     $postArr = $_POST;
-
-    if (isset($postArr['user'])) {
-        if ($postArr['user'] == $guestConfig[$postArr['user']])
-            echo '
-            <script>
-            new $.zui.Messager("管理员账号不能与上传者账号相同!", {
-                type: "danger", // 定义颜色主题 
-                icon: "exclamation-sign" // 定义消息图标
-            }).show();
-            </script>
-            ';
-        exit(header("refresh:1;"));
-    }
 
     $new_config = array_replace($config, $postArr);
     cache_write($config_file, $new_config);
@@ -126,59 +111,9 @@ if (isset($_GET['delete_token'])) {
     header("refresh:1;url=/admin/admin.inc.php");
 }
 
-// 禁用用户
-if (isset($_GET['stop_guest'])) {
-    $stop_guest = $_GET['stop_guest'];
-    $postArr = array(
-        $stop_guest => array(
-            'password' => $guestConfig[$stop_guest]['password'],
-            'expired' => time(),
-            'add_time' => $guestConfig[$stop_guest]['add_time']
-        )
-    );
-    $new_config = array_replace($guestConfig, $postArr);
-    cache_write($guest_config_file, $new_config, 'guestConfig');
-    echo '
-        <script>
-        new $.zui.Messager("禁用上传用户成功!", {
-            type: "primary", // 定义颜色主题 
-            icon: "ok-sign" // 定义消息图标
-        }).show();
-        </script>
-  ';
-    header("refresh:1;url=/admin/admin.inc.php");
-}
-
-
-// 删除用户
-if (isset($_GET['delete_guest'])) {
-    unset($guestConfig[$_GET['delete_guest']]);
-    cache_write($guest_config_file, $guestConfig, 'guestConfig');
-    echo '
-  <script>
-  new $.zui.Messager("删除上传用户成功!", {
-    type: "primary", // 定义颜色主题 
-    icon: "ok-sign" // 定义消息图标
-  }).show();
-  </script>
-  ';
-    header("refresh:1;url=/admin/admin.inc.php");
-}
-
 //  添加管理员修改config.php
 if (isset($_POST['admin_form'])) {
     $postArr = $_POST;
-    if (isset($guestConfig[$postArr['user']])) {
-        echo '
-        <script>
-            new $.zui.Messager("管理员账号不能与上传者账号相同!", {
-                type: "danger", // 定义颜色主题 
-                icon: "exclamation-sign" // 定义消息图标
-            }).show();
-        </script>
-        ';
-        exit(header("refresh:3;"));
-    }
     $postArr = array('user' => $postArr['user'], 'password' => $postArr['password']);
 
     $new_config = array_replace($config, $postArr);
@@ -191,41 +126,6 @@ if (isset($_POST['admin_form'])) {
     }).show();
     </script>
   ';
-    header("refresh:1;");
-}
-
-// 添加上传账号 修改config.guest.php
-if (isset($_POST['uploader_form'])) {
-    // 禁止与管理员登录名相同
-    if ($_POST['uploader_user'] == $config['user']) {
-        echo '
-        <script>
-        new $.zui.Messager("上传用户账号不能与管理员账号相同!", {
-            type: "danger", // 定义颜色主题 
-            icon: "exclamation-sign" // 定义消息图标
-        }).show();
-        </script>
-        ';
-        exit(header("refresh:3;"));
-    }
-    // 写入上传者用户数据
-    $postArr = array(
-        $_POST['uploader_user'] => array(
-            'password' => $_POST['uploader_password'],
-            'expired' => $_POST['uploader_time'] * 86400 + time(),
-            'add_time' => time()
-        )
-    );
-    $new_config = array_replace($guestConfig, $postArr);
-    cache_write($guest_config_file, $new_config, 'guestConfig');
-    echo '
-    <script>
-    new $.zui.Messager("上传用户添加成功!", {
-        type: "primary", // 定义颜色主题 
-        icon: "ok-sign" // 定义消息图标
-    }).show();
-    </script>
-    ';
     header("refresh:1;");
 }
 
@@ -258,15 +158,11 @@ auto_delete(); //定时删除
             <li><a data-tab href="#Content1">网站设置</a></li>
             <li><a data-tab href="#Content9">界面设置</a></li>
             <li><a data-tab href="#Content2">上传设置</a></li>
-            <li><a data-tab href="#Content12">水印设置</a></li>
-            <li><a data-tab href="#Content15">远程附件</a></li>
             <li><a data-tab href="#Content5">API 设置</a></li>
-            <li><a data-tab href="#Content13">上传压缩</a></li>
-            <li><a data-tab href="#Content4">压缩图片</a></li>
+            <li><a data-tab href="#Content13">前端裁剪/压缩</a></li>
             <li><a data-tab href="#Content11">图片回收<span class="label label-badge label-success"><?php echo get_file_by_glob(APP_ROOT . $config['path'] . 'recycle', 'number'); ?></span></a></li>
-            <li><a data-tab href="#Content7">可疑图片<span class="label label-badge label-success"><?php echo get_file_by_glob(APP_ROOT . $config['path'] . 'suspic', 'number'); ?></span></a></li>
             <li><a data-tab href="#Content3">广告设置</a></li>
-            <li><a data-tab href="#Content14">文件管理</a></li>
+            <li><a data-tab href="#Content14">文件维护</a></li>
             <li><a data-tab href="#Content6">图床安全</a></li>
             <li><a data-tab href="#Content10">账号密码</a></li>
             <li><a data-tab href="#Content8">系统信息</a></li>
@@ -361,7 +257,7 @@ auto_delete(); //定时删除
                         </select>
                     </div>
                     <div class="form-group col-md-2">
-                        <label data-toggle="tooltip" title="支持图片转换格式后压缩,压缩率与 上传压缩->后端压缩率关联<br />不建议同时启用后端压缩,避免重复压缩导致图片变大"> * 将上传图片转换格式</label>
+                        <label data-toggle="tooltip" title="上传后按设定格式保存，质量由上传图片质量设置控制"> * 将上传图片转换格式</label>
                         <select class="chosen-select form-control" name="imgConvert">
                             <option value="" <?php if (empty($config['imgConvert'])) echo 'selected'; ?>>不转换</option>
                             <option value="webp" <?php if ($config['imgConvert'] == 'webp') echo 'selected'; ?>>WEBP</option>
@@ -370,13 +266,6 @@ auto_delete(); //定时删除
                             <option value="gif" <?php if ($config['imgConvert'] == 'gif') echo 'selected'; ?>>GIF</option>
                             <option value="bmp" <?php if ($config['imgConvert'] == 'bmp') echo 'selected'; ?>>BMP</option>
                         </select>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label for="chunks" data-toggle="tooltip" title="开启分片后粘贴上传失效<br/>可能使部分文件上传失败<br/>建议最小1Mb(1048576字节)">分片上传 | 设置<code>0</code>关闭</label>
-                        <div class="input-group">
-                            <input type="number" min="0" class="form-control" id="chunks" name="chunks" required="required" value="<?php echo !empty($config['chunks']) ? $config['chunks'] : 0; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                            <span class="input-group-addon">byte</span>
-                        </div>
                     </div>
                 </div>
                 <div class="col-md-12">
@@ -441,49 +330,7 @@ auto_delete(); //定时删除
                 <button type="submit" class="btn btn-primary">保存</button>
             </form>
         </div>
-        <div class="tab-pane fade " id="Content4">
-            <form action="../app/compressing.php" method="post" target="_blank">
-                <h5 class="header-dividing">压缩文件夹</h5>
-                <div class="col-md-12">
-                    <div class="form-group col-md-4">
-                        <input type="text" class="form-control form-date" placeholder="" name="folder" value="<?php echo date('Y/m/d/'); ?>" readonly="">
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="radio-primary col-md-2">
-                        <input type="radio" name="type" value="TinyPng" id="TinyPng"><label for="TinyPng" data-toggle="tooltip" title="需要申请key,填入API设置的TinyPng Key中"> 使用TinyPng</label>
-                    </div>
-                    <div class="radio-primary col-md-2">
-                        <input type="radio" name="type" value="Imgcompress" id="Imgcompress" checked="checked"><label for="Imgcompress" data-toggle="tooltip" title="压缩效率受后端压缩图片压缩率控制"> 使用本地PHP</label>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <label>* 已开启上传压缩的不需重复压缩! </label><br />
-                    <label>* 如果页面长时间没有响应,表示正面正在压缩! </label><br />
-                    <label>* 两种压缩均为不可逆,并且非常占用硬件资源. </label><br />
-                    <button type="submit" class="btn btn-mini btn-success">开始压缩</button>
-                </div>
-            </form>
-        </div>
         <div class="tab-pane fade" id="Content5">
-            <h5 class="header-dividing">外部KEY</h5>
-            <form class="form-condensed" action="<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post" style="margin-bottom: 10px;">
-                <div class="form-group col-md-4">
-                    <label for="TinyPng" data-toggle="tooltip" title="TinyPng 申请网址">TinyPng Key <a href="https://tinypng.com/developers" target="_blank"><i class="icon icon-external-link"></i></a></label>
-                    <input type="text" class="form-control" id="TinyPng" name="TinyPng_key" value="<?php echo $config['TinyPng_key']; ?>" placeholder="填入压缩图片Key" data-toggle="tooltip" title="开启后会受服务器到https://tinypng.com 速度影响,国内不建议开启!" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                    <input type="hidden" class="form-control" name="update" value="<?php echo date("Y-m-d H:i:s"); ?>" placeholder="隐藏的保存">
-                </div>
-                <div class="form-group col-md-4">
-                    <label for="moderatecontent_key" data-toggle="tooltip" title="moderatecontent 申请网址">Moderate Key <a href="https://client.moderatecontent.com" target="_blank"><i class="icon icon-external-link"></i></a></label>
-                    <input type="text" class="form-control" name="moderatecontent_key" id="moderatecontent_key" value="<?php echo $config['moderatecontent_key']; ?>" placeholder="填入图片鉴黄Key" data-toggle="tooltip" title="开启后会受服务器到https://moderatecontent.com 速度影响,国内不建议开启! " onkeyup="this.value=this.value.replace(/\s/g,'')">
-                </div>
-                <div class="form-group col-md-4">
-                    <label for="nsfwjs_url" data-toggle="tooltip" title="nsfwjs 开源地址">nsfwjs url <a href="https://github.com/infinitered/nsfwjs" target="_blank"><i class="icon icon-external-link"></i></a></label>
-                    <input type="url" class="form-control" name="nsfwjs_url" id="nsfwjs_url" value="<?php echo $config['nsfwjs_url']; ?>" placeholder="http://ip:3307/nsfw?url=" data-toggle="tooltip" title="自行搭建nsfwjs服务的网站地址" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                </div>
-                <input type="hidden" class="form-control" name="update" value="<?php echo date("Y-m-d H:i:s"); ?>" placeholder="隐藏的保存">
-                <button type="submit" class="btn btn-primary">保存KEY</button>
-            </form>
             <h5 class="page-header">Token API 管理: <?php if (!$config['token_path_status']) echo '<small>* 部分按钮需开启Token分离才能激活, 删除后不可恢复</small>'; ?></h5>
             <label class="text-primary">当前Token列表 <small><code>调用地址: <?php echo $config['domain']; ?>/api/index.php</code></small></label>
             <div id="myDataGrid" class="datagrid table-bordered">
@@ -660,13 +507,6 @@ auto_delete(); //定时删除
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <div class="switch switch-inline" data-toggle="tooltip" title="以登陆账号名称创建上传目录">
-                                <input type="hidden" name="guest_path_status" value="0">
-                                <input type="checkbox" name="guest_path_status" value="1" <?php if ($config['guest_path_status']) echo 'checked="checked"'; ?>>
-                                <label style="font-weight: bold">用户分离</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
                             <div class="switch switch-inline" data-toggle="tooltip" title="管理员独立上传目录<br />* 自定义目录暂未提供接口,如需修改请修改config.php中的admin_path">
                                 <input type="hidden" name="admin_path_status" value="0">
                                 <input type="checkbox" name="admin_path_status" value="1" <?php if ($config['admin_path_status']) echo 'checked="checked"'; ?>>
@@ -678,13 +518,6 @@ auto_delete(); //定时删除
                                 <input type="hidden" name="hide_path" value="0">
                                 <input type="checkbox" name="hide_path" value="1" <?php if ($config['hide_path']) echo 'checked="checked"'; ?> <?php if ($config['domain'] == $config['imgurl']) echo 'disabled'; ?>>
                                 <label style="font-weight: bold">隐藏<?php echo $config['path']; ?>目录</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="switch switch-inline" data-toggle="tooltip" title="隐藏图片直链 | * 注意: key值与账号密码->源图保护Key绑定,更改源图保护Key后所有链接失效">
-                                <input type="hidden" name="hide" value="0">
-                                <input type="checkbox" name="hide" value="1" <?php if ($config['hide']) echo 'checked="checked"'; ?>>
-                                <label style="font-weight: bold">源图保护</label>
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -727,14 +560,6 @@ auto_delete(); //定时删除
                                 <input type="hidden" name="image_recycl" value="0">
                                 <input type="checkbox" name="image_recycl" value="1" <?php if ($config['image_recycl']) echo 'checked="checked"'; ?>>
                                 <label style="font-weight: bold">文件回收</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <!-- <input type="text" name="admin_path" class="form-control input-sm" value="echo $config['admin_path']" placeholder="请自定义管理的上传目录"> -->
-                            <div class="switch switch-inline" data-toggle="tooltip" title="开启文件管理">
-                                <input type="hidden" name="file_manage" value="0">
-                                <input type="checkbox" name="file_manage" value="1" <?php if ($config['file_manage']) echo 'checked="checked"'; ?>>
-                                <label style="font-weight: bold">文件管理</label>
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -812,13 +637,6 @@ auto_delete(); //定时删除
                                 <input type="range" class="form-control" name="cache_freq" value="<?php echo $config['cache_freq']; ?>" min="1" step="1" max="24" onchange="document.getElementById('cache_freq').innerHTML=value">
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>图片违规判断率 | 当前: </label>
-                                <label id="checkImg_value"><?php echo $config['checkImg_value']; ?></label><label>%</label>
-                                <input type="range" class="form-control" name="checkImg_value" value="<?php echo $config['checkImg_value']; ?>" min="1" max="100" step="1" onchange="document.getElementById('checkImg_value').innerHTML=value">
-                            </div>
-                        </div>
                     </div>
                     <div class="col-md-12">
                         <div class="col-md-4">
@@ -832,22 +650,10 @@ auto_delete(); //定时删除
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <div class="input-group" data-toggle="tooltip" title="请输入限制数量 | 0 为不限制<br /> 开启监黄,水印等受网络波动和机器性能,执行完毕前限制不生效!">
+                                <div class="input-group" data-toggle="tooltip" title="请输入限制数量 | 0 为不限制<br />受网络和机器性能影响，执行完毕前限制不生效">
                                     <span class="input-group-addon">游客上传限制</span>
                                     <input class="form-control" type="number" name="ip_upload_counts" min="0" value="<?php echo $config['ip_upload_counts']; ?>" required="required">
                                     <span class="input-group-addon">张</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <div class="input-group" data-toggle="tooltip" title="使用nsfwjs方式需要自行搭建或使用开源接口 据说准确率能达到93%">
-                                    <span class="input-group-addon">图片鉴黄</span>
-                                    <select class="form-control" name="checkImg">
-                                        <option value="0" <?php if ($config['checkImg'] == 0) echo 'selected'; ?>>关闭</option>
-                                        <option value="1" <?php if ($config['checkImg'] == 1) echo 'selected'; ?>>moderatecontent | API 设置中填入Moderate Key</option>
-                                        <option value="2" <?php if ($config['checkImg'] == 2) echo 'selected'; ?> title="">nsfwjs | API 设置中填入nsfwjs url</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -858,55 +664,6 @@ auto_delete(); //定时删除
                     <button type="submit" class="btn btn-primary">保存</button>
                 </form>
             </div>
-        </div>
-        <div class="tab-pane fade" id="Content7">
-            <h5 class="header-dividing">可疑图片<small> 鉴黄查到的可疑图片</small></h5>
-            <p>key申请地址: <a href="https://client.moderatecontent.com/" target="_blank">https://client.moderatecontent.com/</a></p>
-            <p>获得key后打开->API 设置->Moderate Key->填入key</p>
-            <p>为了访问速度,仅显示最近10张图片;鉴黄需要在图床安全->图片鉴黄中开启</p>
-            <div class="table-responsive table-condensed">
-                <table class="table table-hover table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>序号</th>
-                            <th>缩略图</th>
-                            <th>文件名</th>
-                            <th>文件大小</th>
-                            <th>文件管理</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        // 获取被隔离的文件
-                        $cache_dir = APP_ROOT . $config['path'] . 'suspic/';                             // cache目录
-                        $cache_file = get_file_by_glob($cache_dir . '*.*');                              // 获取所有文件
-                        $cache_num = count($cache_file);                                                 // 统计目录文件个数
-                        for ($i = 0; $i < $cache_num and $i < 11; $i++) :                                // 循环输出文件
-                            $file_cache_path = APP_ROOT . $config['path'] . 'suspic/' . $cache_file[$i]; // 绝对路径
-                            $file_path = $config['path'] . 'suspic/' . $cache_file[$i];                  // 相对路径
-                            $file_size = getDistUsed(filesize($file_cache_path));                        // 大小
-                            $filen_name = $cache_file[$i];                                               // 名称
-                            $url = $config['domain'] . $file_path;                                       // 网络连接
-                            $unlink_img = $config['domain'] . '/app/del.php?url=' . $file_path;          // 删除连接
-                        ?>
-                            <tr>
-                                <td><?php echo $i; ?></td>
-                                <td><a href="<?php echo $url; ?>" data-toggle="lightbox" data-group="suspic-image-group"><img src="<?php echo get_online_thumbnail($file_path); ?>" class="img-rounded" width="100px"></a></td>
-                                <td><?php echo $filen_name; ?></td>
-                                <td><?php echo $file_size; ?></td>
-                                <td>
-                                    <a class="btn btn-mini" href="<?php echo $url; ?>" target="_blank">查看</a>
-                                    <a class="btn btn-mini" href="/app/info.php?img=<?php echo $file_path; ?>" target="_blank">信息</a>
-                                    <a class="btn btn-mini btn-success" href="#" onclick="ajax_post('<?php echo $filen_name; ?>','suspic_reimg')">恢复</a>
-                                    <a class="btn btn-mini btn-danger" href="#" onclick="ajax_post('<?php echo $file_path; ?>','delete')">删除</a>
-                                </td>
-                            </tr>
-                        <?php endfor; ?>
-                    </tbody>
-                </table>
-            </div>
-            <a class="btn btn-mini btn-primary" href="filer.php?path=<?php echo $config['path']; ?>suspic" target="_blank">管理可疑</a>
-            <button class="btn btn-mini btn-danger" onclick="ajax_post('/suspic/','delDir')"><?php echo $cache_num; ?>张 | 删除全部</button>
         </div>
         <div class=" tab-pane fade" id="Content8">
             <div class="alert alert-primary">
@@ -955,19 +712,7 @@ auto_delete(); //定时删除
                 <p>
                     <a href="https://www.openzui.com/" target="_blank"><span class="label label-badge label-primary" data-toggle="tooltip" title="前端框架">ZUI</span></a>
                     <a href="https://github.com/verot/class.upload.php" target="_blank"><span class="label label-badge label-primary" data-toggle="tooltip" title="图像处理类">Verot</span></a>
-                    <a href="https://tinyfilemanager.github.io/" target="_blank"><span class="label label-badge label-primary" data-toggle="tooltip" title="文件管理">Tinyfilemanager</span></a>
-                    <a href="#"><span class="label label-badge label-primary" data-toggle="tooltip" title="文件管理">Web-indexr</span></a>
                     <a href="#Ip2Region" data-toggle="collapse" target="_blank"><span class="label label-badge label-primary" data-toggle="tooltip" title="IP地址数据库">Ip2Region<i class="icon icon-angle-down"></i></span></a>
-                    <?php if (empty($config['TinyPng_key'])) : ?>
-                        <span class="label label-badge label-warning" data-toggle="tooltip" title="压缩图片 TinyPng<br/>未填写">TinyPng</span>
-                    <?php else : ?>
-                        <span class="label label-badge label-primary" data-toggle="tooltip" title="压缩图片 TinyPng<br/>已填写">TinyPng</span>
-                    <?php endif; ?>
-                    <?php if (empty($config['moderatecontent_key'])) : ?>
-                        <span class="label label-badge label-warning" data-toggle="tooltip" title="监黄 moderatecontent<br/>未填写">Moderatecontent</span>
-                    <?php else : ?>
-                        <span class="label label-badge label-primary" data-toggle="tooltip" title="监黄 moderatecontent<br/>已填写">Moderatecontent</span>
-                    <?php endif; ?>
                     <a href="https://github.com/icret/EasyImages2.0/blob/master/LICENSE" target="_blank"><span class="label label-badge" data-toggle="tooltip" title="开源许可证">GPL-2.0</span></a>
                 </p>
                 <p class="text-muted"><i class="icon icon-certificate"> EasyImage2.0简单图床构建于众多优秀的开源项目之上, 非常感谢这些项目!</i></p>
@@ -1111,7 +856,7 @@ auto_delete(); //定时删除
                 <h5 class="header-dividing">管理员账号<small> 不更改账号或者密码就不要保存</small></h5>
                 <div class="col-md-12">
                     <div class="form-group col-md-4">
-                        <div class="input-control has-icon-left" data-toggle="tooltip" title="上传者账号只能上传不能操作其他项目">
+                        <div class="input-control has-icon-left" data-toggle="tooltip" title="管理员账号">
                             <input type="text" name="user" id="account" class="form-control" value="<?php echo $config['user']; ?>" required="required" placeholder="更改管理账号" onkeyup="this.value=this.value.replace(/\s/g,'')">
                             <label for="account" class="input-control-icon-left"><i class="icon icon-user "></i></label>
                         </div>
@@ -1133,7 +878,6 @@ auto_delete(); //定时删除
                 <i class="icon-info-sign"></i>
                 <div class="content">
                     <ul>
-                        <li>管理员账号不能与上传者账号相同</li>
                         <li>直接输入账号和密码即可完成修改</li>
                         <li>更改后会立即生效并重新登录,请务必牢记账号和密码! </li>
                         <li>如果忘记账号可以打开-><code>/config/config.php</code>文件->找到<code data-toggle="tooltip" title="'user'=><strong>admin</strong>'">user</code>对应的键值->填入</li>
@@ -1141,71 +885,6 @@ auto_delete(); //定时删除
                     </ul>
                 </div>
             </div>
-            <!-- 上传用户管理 start-->
-            <form action="<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post" onsubmit="return uploader_md5_post()">
-                <h5 class="header-dividing">上传者账号<small> 账户只能用于上传</small></h5>
-                <div class="col-md-12">
-                    <div class="form-group col-md-3">
-                        <div class="input-control has-icon-left" data-toggle="tooltip" title="上传者账号只能上传不能操作其他项目">
-                            <input type="text" name="uploader_user" id="account" class="form-control" value="" required="required" autocomplete="off" placeholder="添加上传者账号" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                            <label for="account" class="input-control-icon-left"><i class="icon icon-user "></i></label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <div class="input-control has-icon-left">
-                            <input type="text" name="uploader_password" id="uploader_password" class="form-control" value="" required="required" autocomplete="off" placeholder="添加/更改 上传者密码" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                            <input type="hidden" name="uploader_password" id="uploader_md5_password">
-                            <label for="password" class="input-control-icon-left"><i class="icon icon-key"></i></label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <div class="input-group">
-                            <span class="input-group-addon">有效期</span>
-                            <input type="number" class="form-control" name="uploader_time" value="30" id="uploader_time" placeholder="有效期 单位: 天" required="required">
-                            <span class="input-group-addon">天</span>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <input type="hidden" name="uploader_form" value="" placeholder="隐藏的保存">
-                        <button type="submit" class="btn btn-danger">添加|更改 上传者 账号|密码</button>
-                    </div>
-                </div>
-            </form>
-            <div class="alert alert-primary with-icon col-xs-8">
-                <i class="icon-info-sign"></i>
-                <div class="content">
-                    <ul>
-                        <li>上传用户账号不能与管理员账号相同</li>
-                        <li>上传用户的配置文件在<code>config.guest.php</code></li>
-                        <li>开启登录上传后,可以添加一些只能上传的账号</li>
-                        <li>更改后会立即生效并重新登录,请将账号和密码发给使用者</li>
-                        <li>如果忘记密码请填入账号并填写新的密码即可更正密码 | <b class="text-success">与更改管理 账号/密码不同!</b></li>
-                    </ul>
-                </div>
-            </div>
-            <h5>* 开启用户分离后删除上传按钮激活, 删除后不可恢复</h5>
-            <div id="guest" class="datagrid table-bordered">
-                <div class="input-control search-box search-box-circle has-icon-left has-icon-right" id="searchboxExample2" style="margin-bottom: 10px;">
-                    <input id="inputSearchExample2" type="search" class="form-control search-input" placeholder="上传用户搜索...">
-                    <label for="inputSearchExample2" class="input-control-icon-left search-icon"><i class="icon icon-search"></i></label>
-                    <a href="#" class="input-control-icon-right search-clear-btn"><i class="icon icon-remove"></i></a>
-                </div>
-                <div class="datagrid-container"></div>
-            </div>
-            <!-- 源图加密Key start-->
-            <form action="<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post">
-                <h5 class="header-dividing">源图保护Key<small> * 设定后请勿更改,否则所有加密链接失效</small></h5>
-                <div class="col-md-3">
-                    <div class="input-control has-icon-left" style="margin-top: 5px;">
-                        <input type="text" class="form-control" name="hide_key" required="required" value="<?php echo $config['hide_key']; ?>" onkeyup="this.value=this.value.trim()">
-                        <label for="password" class="input-control-icon-left"><i class="icon icon-key"></i></label>
-                    </div>
-                </div>
-                <div class="form-group col-md-9" style="margin-top: 5px;">
-                    <input type="hidden" class="form-control" name="update" value="<?php echo date("Y-m-d H:i:s"); ?>" placeholder="隐藏的保存">
-                    <button type="submit" class="btn btn-danger">保存源图加密Key</button>
-                </div>
-            </form>
         </div>
         <div class="tab-pane fade" id="Content11">
             <h5 class="header-dividing">图片回收<small> 显示通过加密删除文件</small></h5>
@@ -1251,59 +930,7 @@ auto_delete(); //定时删除
                     </tbody>
                 </table>
             </div>
-            <a class="btn btn-mini btn-primary" href="filer.php?path=<?php echo $config['path']; ?>recycle" target="_blank">管理回收</a>
             <button class="btn btn-mini btn-danger" onclick="ajax_post('/recycle/','delDir')"><?php echo $cache_num; ?>张 | 删除全部</button>
-        </div>
-        <div class="tab-pane fade" id="Content12">
-            <form action="<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post">
-                <div class="form-group col-md-6">
-                    <label>水印方式</label>
-                    <select class="chosen-select form-control" name="watermark">
-                        <option value="0" <?php if (!$config['watermark']) echo 'selected'; ?>>关闭水印</option>
-                        <option value="1" <?php if ($config['watermark'] == 1) echo 'selected'; ?>>文字水印</option>
-                        <option value="2" <?php if ($config['watermark'] == 2) echo 'selected'; ?>>图片水印</option>
-                    </select>
-                </div>
-                <div class="form-group col-md-6">
-                    <label data-toggle="tooltip" title="不开启水印方式不生效">水印位置</label>
-                    <select class="chosen-select form-control" name="waterPosition">
-                        <option value="0" <?php if (!$config['waterPosition']) echo 'selected'; ?>>随机位置</option>
-                        <option value="1" <?php if ($config['waterPosition'] == 1) echo 'selected'; ?>>顶部居左</option>
-                        <option value="2" <?php if ($config['waterPosition'] == 2) echo 'selected'; ?>>顶部居中</option>
-                        <option value="3" <?php if ($config['waterPosition'] == 3) echo 'selected'; ?>>顶部居右</option>
-                        <option value="4" <?php if ($config['waterPosition'] == 4) echo 'selected'; ?>>左边居中</option>
-                        <option value="5" <?php if ($config['waterPosition'] == 5) echo 'selected'; ?>>图片中心</option>
-                        <option value="6" <?php if ($config['waterPosition'] == 6) echo 'selected'; ?>>右边居中</option>
-                        <option value="7" <?php if ($config['waterPosition'] == 7) echo 'selected'; ?>>底部居左</option>
-                        <option value="8" <?php if ($config['waterPosition'] == 8) echo 'selected'; ?>>底部居中</option>
-                        <option value="9" <?php if ($config['waterPosition'] == 9) echo 'selected'; ?>>底部居右</option>
-                    </select>
-                </div>
-                <div class="form-group col-md-6">
-                    <label data-toggle="tooltip" title="支持GIF,JPG,BMP,PNG和PNG alpha">图片水印路径</label>
-                    <input type="text" class="form-control" name="waterImg" required="required" value="<?php echo $config['waterImg']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                </div>
-                <div class="form-group col-md-6">
-                    <label data-toggle="tooltip" title="水印中含有中文的,请选用符合GB/2312的字体">文字水印 | 验证码的字体路径</label>
-                    <input type="text" class="form-control" name="textFont" required="required" value="<?php echo $config['textFont']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                </div>
-                <div class="form-group col-md-3">
-                    <label>文字水印</label>
-                    <input type="text" class="form-control" name="waterText" required="required" value="<?php echo $config['waterText']; ?>" onkeyup="this.value=this.value.trim()">
-                </div>
-                <div class="form-group col-md-3">
-                    <label data-toggle="tooltip" title="格式RGBA 末尾为透明度0-127 0为不透明,仅支持文字水印">文字水印颜色</label>
-                    <input type="text" name="textColor" class="form-control" value="" data-jscolor="{preset:'myPreset'}" readonly required="required">
-                </div>
-                <div class="form-group col-md-6">
-                    <label>文字水印大小 | 当前: </label><label id="textSize"><?php echo $config['textSize']; ?></label><label>px</label>
-                    <input type="range" class="form-control" name="textSize" value="<?php echo $config['textSize']; ?>" min="10" max="300" step="5" onchange="document.getElementById('textSize').innerHTML=value">
-                </div>
-                <div class="form-group">
-                    <input type="hidden" class="form-control" name="update" value="<?php echo date("Y-m-d H:i:s"); ?>" placeholder="隐藏的保存">
-                </div>
-                <button type="submit" class="btn btn-primary">保存</button>
-            </form>
         </div>
         <div class="tab-pane fade" id="Content13">
             <form action="<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post">
@@ -1347,16 +974,8 @@ auto_delete(); //定时删除
                 </div>
 
 
-                <h5 class="header-dividing">后端压缩 <small data-toggle="tooltip" title=" 有一定概率改变图片方向,有可能使图片变大(特别是小图片) !<br />开启转换图片格式后不建议开启此选项,可能会导致图片变大!">优点:避免用户端欺骗,效果更好 缺点:增加服务器压力</small></h5>
                 <div class="form-group">
-                    <div class="switch switch-inline">
-                        <input type="hidden" name="compress" value="0">
-                        <input type="checkbox" name="compress" value="1" <?php if ($config['compress']) echo 'checked="checked"'; ?>>
-                        <label style="font-weight: bold">后端压缩上传图片 | 更多图片格式的支持</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>后端压缩率 | 当前: </label><label id="compress_ratio"><?php echo $config['compress_ratio']; ?></label><label>%</label>
+                    <label>上传图片质量 | 当前: </label><label id="compress_ratio"><?php echo $config['compress_ratio']; ?></label><label>%</label>
                     <input type="range" class="form-control" name="compress_ratio" value="<?php echo $config['compress_ratio']; ?>" min="1" max="100" step="1" onchange="document.getElementById('compress_ratio').innerHTML=value">
                 </div>
                 <div class="form-group">
@@ -1366,9 +985,7 @@ auto_delete(); //定时删除
             </form>
         </div>
         <div class="tab-pane fade" id="Content14">
-            <h5 class="header-dividing">文件管理 <small>由作者定制,非必要请勿替换</small></h5>
-            <a class="btn btn-mini btn-primary" href="/admin/manager.php?p=<?php echo date('Y/m/d'); ?> " target="_blank" data-toggle="tooltip" title="使用Tinyfilemanager管理文件"><i class="icon icon-folder-open"> 文件管理</i></a>
-            <a class="btn btn-mini btn-primary" href="filer.php?path=<?php echo $config['path'] . date('Y/m/d'); ?> " target="_blank" data-toggle="tooltip" title="使用web-indexr管理文件"><i class="icon icon-folder-close"> 文件管理</i></a>
+            <h5 class="header-dividing">文件维护</h5>
             <h5 class="header-dividing">删除文件 <small>* 删除后不可恢复</small></h5>
             <form class="form-inline" method="POST" style="margin-bottom: 5px;">
                 <p id="delimgurl"></p>
@@ -1386,97 +1003,11 @@ auto_delete(); //定时删除
                 <button type="submit" class="btn btn-sm btn-danger" onclick="ajax_post($('#dateDir').val(),'delDir')">删除</button>
             </form>
         </div>
-        <div class="tab-pane fade" id="Content15">
-            <div class="alert alert-primary with-icon">
-                <i class="icon-info-sign"></i>
-                <div class="content">
-                    <ol>
-                        <li>慎用，正在实验中</li>
-                        <li>已回收的图片无法再还原到FTP</li>
-                        <li>效果: 开启后上传|删除等受网络影响</li>
-                        <li>流程: 客户端->图床服务器->远程附件</li>
-                        <li>网络影响: 当前服务器->远程附件服务器速度</li>
-                    </ol>
-                </div>
-            </div>
-            <h5 class="header-dividing">远程附件 <small> 将文件以FTP方式上传到第三方</small></h5>
-            <form action="<?php echo $_SERVER['SCRIPT_NAME']; ?>" method="post">
-                <div class="col-md-12">
-                    <div class="form-group col-md-2">
-                        <div class="switch switch-inline">
-                            <input type="hidden" name="ftp_status" value="0">
-                            <input type="checkbox" name="ftp_status" value="1" <?php if ($config['ftp_status']) echo 'checked="checked"'; ?>>
-                            <label style="font-weight: bold">启用远程附件</label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <div class="switch switch-inline" data-toggle="tooltip" title="一般情况下被动模式即可<br/>如果存在上传失败可尝试开启">
-                            <input type="hidden" name="ftp_pasv" value="0">
-                            <input type="checkbox" name="ftp_pasv" value="1" <?php if ($config['ftp_pasv']) echo 'checked="checked"'; ?>>
-                            <label style="font-weight: bold">主动模式</label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <div class="switch switch-inline" data-toggle="tooltip" title="注意: FTP服务器需开启SSL">
-                            <input type="hidden" name="ftp_ssl" value="0">
-                            <input type="checkbox" name="ftp_ssl" value="1" <?php if ($config['ftp_ssl']) echo 'checked="checked"'; ?>>
-                            <label style="font-weight: bold">启用SSL</label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <div class="switch switch-inline" data-toggle="tooltip" title="FTP上传完毕删除本地文件<br/>非自用不建议开启此选项<br/>没有SQL无法管理远程文件">
-                            <input type="hidden" name="ftp_complete_del_local" value="0">
-                            <input type="checkbox" name="ftp_complete_del_local" value="1" <?php if ($config['ftp_complete_del_local']) echo 'checked="checked"'; ?>>
-                            <label style="font-weight: bold">完成删除</label>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <div class="switch switch-inline" data-toggle="tooltip" title="删除本地文件时同步删除远程附件">
-                            <input type="hidden" name="ftp_delloc_sync" value="0">
-                            <input type="checkbox" name="ftp_delloc_sync" value="1" <?php if ($config['ftp_delloc_sync']) echo 'checked="checked"'; ?>>
-                            <label style="font-weight: bold">同步删除</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="form-group col-md-3">
-                        <label data-toggle="tooltip" title="域名/IP地址, 可以先测试FTP软件是否能正常登录">FTP 服务器地址</label>
-                        <input type="text" class="form-control" name="ftp_host" value="<?php echo $config['ftp_host']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')" placeholder="FTP 服务器地址">
-                    </div>
-                    <div class="form-group col-md-1">
-                        <label data-toggle="tooltip" title="FTP 链接端口, 默认:21">端口</label>
-                        <input type="number" class="form-control" name="ftp_port" required="required" value="<?php echo $config['ftp_port']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                    </div>
-                    <div class="form-group col-md-1">
-                        <label data-toggle="tooltip" title="FTP 传输超时时间<br/> 单位:秒, 0为服务器默认时间">超时时间</label>
-                        <input type="number" class="form-control" name="ftp_time" required="required" value="<?php echo $config['ftp_time']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label data-toggle="tooltip" title="FTP 账号,该账户需要有以下权限: 读取/写入/删除文件、创建/继承目录">账号</label>
-                        <input type="text" class="form-control" name="ftp_user" value="<?php echo $config['ftp_user']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')" placeholder="FTP 账号">
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label data-toggle="tooltip" title="FTP 密码">密码</label>
-                        <input type="password" class="form-control" name="ftp_pass" value="<?php echo $config['ftp_pass']; ?>" onkeyup="this.value=this.value.replace(/\s/g,'')" placeholder="FTP 密码">
-                    </div>
-                    <div class="form-group col-md-3">
-                        <label data-toggle="tooltip" title="网址与图片域名一致, 末尾不加'/'">远程图片域名</label>
-                        <input type="url" class="form-control" name="imgurl" value="<?php echo $config['imgurl']; ?>" required="required" readonly="readonly" onkeyup="this.value=this.value.replace(/\s/g,'')">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <input type="hidden" class="form-control" name="update" value="<?php echo date("Y-m-d H:i:s"); ?>" placeholder="隐藏的保存">
-                </div>
-                <button type="submit" class="btn btn-primary">保存</button>
-            </form>
-        </div>
     </div>
 </div>
 <link rel="stylesheet" href="<?php static_cdn(); ?>/public/static/zui/lib/datagrid/zui.datagrid.min.css">
 <link rel="stylesheet" href="<?php static_cdn(); ?>/public/static/zui/lib/datetimepicker/datetimepicker.min.css">
 <script type="application/javascript" src="<?php static_cdn(); ?>/public/static/crypto/SHA256.js"></script>
-<script type="application/javascript" src="<?php static_cdn(); ?>/public/static/crypto/SHA256.js"></script>
-<script type="application/javascript" src="<?php static_cdn(); ?>/public/static/jscolor/jscolor.min.js"></script>
 <script type="application/javascript" src="<?php static_cdn(); ?>/public/static/zui/lib/datagrid/zui.datagrid.min.js"></script>
 <script type="application/javascript" src="<?php static_cdn(); ?>/public/static/zui/lib/datetimepicker/datetimepicker.min.js"></script>
 <script>
@@ -1529,22 +1060,6 @@ auto_delete(); //定时删除
             });
     }
 
-    // 水印字体颜色
-    jscolor.presets.myPreset = {
-        value: '<?php echo $config['textColor']; ?>',
-        format: 'rgba',
-        closeText: true,
-        width: 201,
-        height: 81,
-        backgroundColor: '#333',
-        palette: [
-            '#000000', '#7d7d7d', '#870014', '#ec1c23', '#ff7e26',
-            '#fef100', '#22b14b', '#00a1e7', '#3f47cc', '#a349a4',
-            '#ffffff', '#c3c3c3', '#b87957', '#feaec9', '#ffc80d',
-            '#eee3af', '#b5e61d', '#99d9ea', '#7092be', '#c8bfe7',
-        ],
-    }
-
     // 使用本地存储记录当前tab页面
     if ($.zui.store.enable == false) {
         new $.zui.Messager("localStorage 错误,无法存储上传历史记录", {
@@ -1570,14 +1085,6 @@ auto_delete(); //定时删除
         $('#Content1').addClass("active in")
     }
 
-    // 账号密码 | 以md5加密方式发送
-    function uploader_md5_post() {
-        var password = document.getElementById('uploader_password');
-        var md5pwd = document.getElementById('uploader_md5_password');
-        md5pwd.value = SHA256(password.value);
-        //可以校验判断表单内容,true就是通过提交,false,阻止提交
-        return true;
-    }
     // 账号密码 | 以md5加密方式发送
     function md5_post() {
         var password = document.getElementById('password');
@@ -1675,7 +1182,7 @@ auto_delete(); //定时删除
                         add_time: '<?php echo date('Y-m-d H:i:s', $value['add_time']); ?>',
                         expired: '<?php echo $expired; ?>',
                         number: <?php echo get_file_by_glob(APP_ROOT . $config['path'] . $value['id'], $type = 'number'); ?>,
-                        manage: "<a href='/admin/manager.php?p=<?php echo $value['id']; ?>' target='_blank' class='btn btn-mini btn-success <?php if (!$config['token_path_status']) echo 'disabled'; ?>'>文件</a> <a href='admin.inc.php?stop_token=<?php echo $key; ?>' class='btn btn-mini btn-danger'>禁用</a> <a href='admin.inc.php?delete_token=<?php echo $key; ?>' class='btn btn-mini btn-danger'>删除</a> <a href='#' onclick=\"ajax_post('<?php echo $value['id']; ?>','delDir')\" class='btn btn-mini btn-primary <?php if (!$config['token_path_status']) echo 'disabled'; ?>'>删除上传</a>"
+                        manage: "<a href='admin.inc.php?stop_token=<?php echo $key; ?>' class='btn btn-mini btn-danger'>禁用</a> <a href='admin.inc.php?delete_token=<?php echo $key; ?>' class='btn btn-mini btn-danger'>删除</a> <a href='#' onclick=\"ajax_post('<?php echo $value['id']; ?>','delDir')\" class='btn btn-mini btn-primary <?php if (!$config['token_path_status']) echo 'disabled'; ?>'>删除上传</a>"
                     },
                 <?php endforeach; ?>
             ]
@@ -1701,85 +1208,6 @@ auto_delete(); //定时删除
 
     // 按照 `name` 列降序排序
     tokenMyDataGrid.sortBy('expired', 'desc');
-
-    // guest 上传用户数据表格
-    $('#guest').datagrid({
-        dataSource: {
-            height: 800,
-            cols: [{
-                    label: '账号',
-                    name: 'guest',
-                    html: true,
-                    width: 0.1
-                },
-                {
-                    label: '密码 (SHA256)',
-                    name: 'password',
-                    html: true,
-                    width: 0.2
-                },
-                {
-                    label: '添加时间',
-                    name: 'add_time',
-                    html: true,
-                    width: 0.15
-
-                },
-                {
-                    label: '有效期至',
-                    name: 'expired',
-                    html: true,
-                    width: 0.15
-                },
-                {
-                    label: '上传数量',
-                    name: 'files',
-                    html: true,
-                    width: 0.1
-                },
-                {
-                    label: '管理账号',
-                    name: 'manage',
-                    html: true,
-                    width: 0.3
-
-                },
-            ],
-            array: [
-                <?php foreach ($guestConfig as $k => $v) :
-                    $expired = $v['expired'] < time() ? '<p class="text-gray">已过期</p>' : '<p class="text-green">' . date('Y-m-d H:i:s', $v['expired']) . '</p>'; ?> {
-                        guest: '<?php echo $k; ?>',
-                        password: '<input class="form-control input-sm" type="text" value="<?php echo $v['password']; ?>" readonly>',
-                        add_time: '<?php echo date('Y-m-d H:i:s', $v['add_time']); ?>',
-                        expired: '<?php echo $expired; ?>',
-                        files: <?php echo get_file_by_glob(APP_ROOT . $config['path'] . $k, $type = 'number'); ?>,
-                        manage: "<a href='/admin/manager.php?p=<?php echo $k; ?>' target='_blank' class='btn btn-mini btn-success <?php if (!$config['guest_path_status']) echo 'disabled'; ?>'>文件</a> <a href='admin.inc.php?stop_guest=<?php echo $k; ?>' class='btn btn-mini btn-danger'>禁用</a> <a class='btn btn-mini btn-danger' href='admin.inc.php?delete_guest=<?php echo $k; ?>'>删除</a> <a class='btn btn-mini btn-primary <?php if (!$config['guest_path_status']) echo 'disabled'; ?>' href='#' onclick=\"ajax_post('<?php echo $k; ?>','delDir')\">删除上传</a>",
-                    },
-                <?php endforeach; ?>
-            ]
-        },
-        sortable: true,
-        storage: true,
-        hoverCell: true,
-        showRowIndex: true,
-        responsive: true,
-        height: 200,
-        // ... 其他初始化选项
-        configs: {
-            R1: {
-                style: {
-                    color: '#00b8d4',
-                    backgroundColor: '#e0f7fa'
-                }
-            },
-        }
-    });
-
-    // 获取数据表格实例
-    var guestMyDataGrid = $('#guest').data('zui.datagrid');
-
-    // 按照 `name` 列降序排序
-    guestMyDataGrid.sortBy('add_time', 'desc');
 
     /** 引入设置页面检测文件 */
     <?php if ($config['checkEnv']) require_once __DIR__ . '/inc.check.php'; ?>

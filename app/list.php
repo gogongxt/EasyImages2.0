@@ -274,7 +274,7 @@ if ($config['ad_top']) echo $config['ad_top_info'];
     // 回收图片
     function recycle_img() {
       bootbox.confirm({
-        message: "确认要放入回收站? <br /> 可在可疑图片中恢复!",
+        message: "确认要放入回收站? <br /> 可在图片回收中恢复!",
         buttons: {
           confirm: {
             label: '确定',

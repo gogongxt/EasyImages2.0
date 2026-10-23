@@ -121,7 +121,7 @@ mustLogin();
     // 最大支持的上传文件
     max_file_size: <?php echo $config['maxSize']; ?>,
     // 分片上传 0为不分片 分片容易使图片上传失败
-    chunk_size: <?php echo $config['chunks']; ?>,
+    chunk_size: 0,
     // 点击文件列表上传文件
     browseByClickList: true,
     // flash 上传组件地址

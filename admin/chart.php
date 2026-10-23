@@ -90,11 +90,6 @@ if (is_array($char_data)) {
             <?php printf("%u 张", getFileNumber(APP_ROOT . $config['path'] . 'cache/')); ?>
         </div>
         <div class="col-xs-3 alert alert-primary autoshadow">
-            可疑图片
-            <hr />
-            <?php printf("%u 张", getFileNumber(APP_ROOT . $config['path'] . 'suspic/')); ?>
-        </div>
-        <div class="col-xs-3 alert alert-primary autoshadow">
             文件夹
             <hr />
             <?php printf("%d 个", read_total_json('dirnum')); ?>

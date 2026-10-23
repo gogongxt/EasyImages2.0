@@ -75,14 +75,7 @@ if ($config['ip_upload_counts'] > 0 && !is_who_login('status')) {
     }
 }
 
-// 分片上传
-if ($config['chunks']) {
-    $chunk = chunk($_POST['name']);
-    // exit($chunk);
-    $handle = new Upload($chunk, 'zh_CN');
-} else {
-    $handle = new Upload($_FILES['file'], 'zh_CN');
-}
+$handle = new Upload($_FILES['file'], 'zh_CN');
 
 if ($handle->uploaded) {
     // 允许上传的mime类型
@@ -149,15 +142,8 @@ if ($handle->uploaded) {
     $Img_path = config_path();
     // 开启管理员自定义目录
     if ($config['admin_path_status']) {
-        if (checkLogin() === 204) {
+        if (is_who_login('admin')) {
             $Img_path = config_path($config['admin_path'] . date('/Y/m/d/'));
-        }
-    }
-    // 开启上传者单独目录
-    if ($config['guest_path_status']) {
-        if (checkLogin() === 205) {
-            $getCok = json_decode($_COOKIE['auth']);
-            $Img_path = config_path($getCok[0] . date('/Y/m/d/'));
         }
     }
 
@@ -186,18 +172,9 @@ if ($handle->uploaded) {
         $pathIMG = $Img_path . $handle->file_dst_name;
         // 图片访问网址
         $imageUrl = rand_imgurl() . $pathIMG;
-        // 后续处理地址
-        $processUrl = $config['domain'] . $pathIMG;
-
         // 隐藏config文件中的path目录,需要搭配网站设置
         if ($config['hide_path'] === 1) {
             $imageUrl = str_replace($config['path'], '/', $imageUrl);
-        }
-
-        // 源图保护 key值是由crc32加密的hide_key
-        // $hide_original = $config['hide'] == 1 ? $config['domain'] . '/app/hide.php?key=' . urlHash($pathIMG, 0, crc32($config['hide_key'])) : $imageUrl;
-        if ($config['hide'] === 1) {
-            $imageUrl = $config['domain'] . '/app/hide.php?key=' . urlHash($pathIMG, 0, crc32($config['hide_key']));
         }
 
         // 删除文件链接
@@ -252,14 +229,6 @@ if ($handle->uploaded) {
     @write_ip_upload_count_logs();
     // 日志
     @write_upload_logs($pathIMG, $handle->file_src_name, $handle->file_dst_pathname, $handle->file_src_size);
-    // 鉴黄
-    @process_checkImg($processUrl);
-    // 水印
-    @water($handle->file_dst_pathname);
-    // 压缩
-    @process_compress($handle->file_dst_pathname);
-    // 上传至其他位置
-    @any_upload($pathIMG, APP_ROOT . $pathIMG, 'upload');
 
     unset($handle);
 }

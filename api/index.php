@@ -46,13 +46,7 @@ $token = preg_replace('/[\W]/', '', $_POST['token']);
 check_api($token);
 $tokenID = $tokenList[$token]['id'];
 
-// 分片上传
-if (!$config['chunks']) {
-    $handle = new Upload($_FILES['image'], 'zh_CN');
-} else {
-    $chunk = chunk($_POST['name']);
-    $handle = new Upload($chunk, 'zh_CN');
-}
+$handle = new Upload($_FILES['image'], 'zh_CN');
 
 if ($handle->uploaded) {
     // 允许上传的mime类型
@@ -132,15 +126,9 @@ if ($handle->uploaded) {
         $pathIMG = $Img_path . $handle->file_dst_name;
         // 图片访问网址
         $imageUrl = rand_imgurl() . $pathIMG;
-        // 后续处理地址
-        $processUrl = $config['domain'] . $pathIMG;
         // 隐藏config文件中的path目录,需要搭配网站设置
         if ($config['hide_path']) {
             $imageUrl = str_replace($config['path'], '/', $imageUrl);
-        }
-        // 源图保护 key值是由crc32加密的hide_key
-        if ($config['hide']) {
-            $imageUrl = $config['domain'] . '/app/hide.php?key=' . urlHash($pathIMG, 0, crc32($config['hide_key']));
         }
         // 删除文件链接
         if ($config['show_user_hash_del']) {
@@ -198,14 +186,6 @@ if ($handle->uploaded) {
     @write_ip_upload_count_logs();
     // 日志
     @write_upload_logs($pathIMG, $handle->file_src_name, $handle->file_dst_pathname, $handle->file_src_size);
-    // 鉴黄
-    @process_checkImg($processUrl);
-    // 水印
-    @water($handle->file_dst_pathname);
-    // 压缩
-    @process_compress($handle->file_dst_pathname);
-    // 上传至其他位置
-    @any_upload($pathIMG, APP_ROOT . $pathIMG, 'upload');
 
     unset($handle);
 }

@@ -54,7 +54,7 @@ if ($config['notice_status'] > 0) : ?>
     <?php /** 暗黑模式 */ if ($config['dark-mode']) : ?>
       <a id="dark" data-toggle="tooltip" title="暗黑模式"><i class="icon icon-lightbulb" id="dark_ico"></i></a>
     <?php endif; ?>
-    <?php /**登录与退出 */ if (is_who_login('admin') || is_who_login('guest')) : ?>
+    <?php /**登录与退出 */ if (is_who_login('admin')) : ?>
       <a href="<?php echo $config['domain']; ?>/admin/index.php?login=logout" data-toggle="tooltip" title="退出账号"><i class="icon icon-signout"></i></a>
     <?php else : ?>
       <a href="<?php echo $config['domain']; ?>/admin/index.php" data-toggle="tooltip" title="账号登录"><i class="icon icon-user"></i></a>

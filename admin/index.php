@@ -4,11 +4,10 @@
  */
 require_once __DIR__ . '/../app/function.php';
 require_once APP_ROOT . '/app/header.php';
-require_once APP_ROOT . '/config/config.guest.php';
 
 // 退出
 if (isset($_GET['login'])) {
-    if ($_GET['login'] = 'logout') {
+    if ($_GET['login'] === 'logout') {
 
         if (isset($_COOKIE['auth'])) {
             setcookie('auth', null, time() - 1, '/');
@@ -92,7 +91,7 @@ if (isset($_POST['password']) and isset($_POST['user'])) {
     }
 
     // 登录日志
-    write_login_log($_POST['user'], $_POST['password'], $login["messege"]);
+    write_login_log($_POST['user'], $login["messege"]);
 }
 ?>
 <link rel="stylesheet" href="<?php static_cdn(); ?>/public/static/login.css">
@@ -142,21 +141,6 @@ if (isset($_POST['password']) and isset($_POST['user'])) {
                 </form>
             </div>
         </div>
-        <div class="user singupBx">
-            <div class="formBx">
-                <form action="">
-                    <h2>注册</h2>
-                    <input type="text" name="telyzm" id="telyzm" placeholder="手机号">
-                    <input type="email" name="" placeholder="邮箱地址">
-                    <input type="password" name="" placeholder="设置密码">
-                    <input type="password" name="" placeholder="再次输入密码">
-                    <input type="submit" name="" value="注册">
-                    <p class="signup">已有账号？<a href="#" onclick="topggleForm();">登录</a></p>
-                </form>
-            </div>
-            <div class="imgBx"><img src="<?php echo $config['login_bg']; ?>" alt="简单图床登陆界面背景图" />
-            </div>
-        </div>
     </div>
 </section>
 </form>
@@ -172,9 +156,5 @@ if (isset($_POST['password']) and isset($_POST['user'])) {
         return true;
     }
 
-    function topggleForm() {
-        var container = document.querySelector('.container');
-        container.classList.toggle('active');
-    }
 </script>
 <?php require_once APP_ROOT . '/app/footer.php';

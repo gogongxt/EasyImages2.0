@@ -27,9 +27,7 @@ if (isset($_GET['hash'])) {
 
     if ($config['image_recycl']) {
         // 如果开启回收站则进入回收站
-        if (checkImg($delHash, 3, 'recycle/') === true) {
-
-            any_upload($delHash, $delHash, 'delete'); // FTP删除
+        if (move_to_recycle($delHash) === true) {
 
             exit(json_encode(array(
                 'code' => 200,
@@ -51,8 +49,6 @@ if (isset($_GET['hash'])) {
         }
     } else {
         getDel($delHash, 'url'); // 直接删除
-
-        any_upload($delHash, $delHash, 'delete'); // FTP删除
 
         exit(json_encode(array(
             'code' => 200,
@@ -82,8 +78,6 @@ if (isset($_POST['del_url_array'])) {
     $del_num = count($del_url_array);
     for ($i = 0; $i < $del_num; $i++) {
         getDel($del_url_array[$i], 'url');
-        // FTP删除
-        any_upload($del_url_array[$i], $del_url_array[$i], 'delete');
     }
     echo json_encode(array(
         'code' => 200,
@@ -100,7 +94,7 @@ if (isset($_POST['recycle_url_array'])) {
     $recycle_url_array = $_POST['recycle_url_array'];
     $del_num = count($recycle_url_array);
     for ($i = 0; $i < $del_num; $i++) {
-        checkImg($recycle_url_array[$i], 3);
+        move_to_recycle($recycle_url_array[$i]);
     }
 }
 
@@ -109,8 +103,6 @@ if (isset($_POST['url'])) $postURL = strip_tags($_POST['url']);
 // 广场|日志 - 单文件删除
 if (isset($_POST['mode']) && $_POST['mode'] === 'delete') {
     $reslut = easyimage_delete($postURL, 'url');
-    // FTP删除
-    any_upload($postURL, $postURL, 'delete');
 
     if ($reslut) {
         exit(json_encode(array(
@@ -136,7 +128,7 @@ if (isset($_POST['mode']) && $_POST['mode'] === 'delete') {
 // 广场|日志 - 回收文件
 if (isset($_POST['mode']) && $_POST['mode'] === 'recycle') {
     if (is_file(APP_ROOT . $postURL)) {
-        checkImg($postURL, 3);
+        move_to_recycle($postURL);
         exit(json_encode(array(
             'code' => 200,
             'msg' => '回收成功',
@@ -187,36 +179,7 @@ if (isset($_POST['mode']) && $_POST['mode'] === 'del_version_file') {
 // 管理页面 - 回收站恢复文件
 if (isset($_POST['mode']) && $_POST['mode'] === 'recycle_reimg') {
     try {
-        if (re_checkImg($postURL, 'recycle/') === true) {
-            $re = json_encode(array(
-                'code' => 200,
-                'msg'  => '恢复成功',
-                'type' => 'success',
-                'icon' => 'ok-sign',
-                'mode' => 'delete',
-                'url'  => $postURL
-            ), JSON_UNESCAPED_UNICODE);
-        } else {
-            throw new Exception('恢复失败');
-        }
-    } catch (Exception $e) {
-        $re = json_encode(array(
-            'code' => 404,
-            'msg'  => $e->getMessage(),
-            'type' => 'danger',
-            'icon' => 'exclamation-sign',
-            'mode' => 'delete',
-            'url'  => $postURL
-        ), JSON_UNESCAPED_UNICODE);
-    } finally {
-        exit($re);
-    }
-}
-
-// 管理页面 - 监黄恢复文件
-if (isset($_POST['mode']) && $_POST['mode'] === 'suspic_reimg') {
-    try {
-        if (re_checkImg($postURL, 'suspic/') === true) {
+        if (re_checkImg($postURL) === true) {
             $re = json_encode(array(
                 'code' => 200,
                 'msg'  => '恢复成功',
